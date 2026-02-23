@@ -66,7 +66,7 @@ def get_history(current_user: models.User = Depends(auth.get_current_user), db: 
 # --- 5. CORE APP ENDPOINTS ---
 
 @app.post("/api/teach")
-async def teach_lesson(file: UploadFile = File(...)):
+def teach_lesson(file: UploadFile = File(...)):
     try:
         # 1. DETECT EXTENSION
         filename, file_extension = os.path.splitext(file.filename)
@@ -93,7 +93,7 @@ async def teach_lesson(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/analyze")
-async def analyze_student(
+def analyze_student(
     file: UploadFile = File(...), 
     current_user: models.User = Depends(auth.get_current_user), 
     db: Session = Depends(auth.get_db)

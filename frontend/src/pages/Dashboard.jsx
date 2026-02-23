@@ -1,3 +1,4 @@
+// frontend/src/pages/Dashboard.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Canvas } from '@react-three/fiber';
@@ -98,7 +99,7 @@ const Dashboard = () => {
     const [studentData, setStudentData] = useState(null);
     const [teacherAudioURL, setTeacherAudioURL] = useState(null);
     const [studentAudioURL, setStudentAudioURL] = useState(null);
-    const [errorMsg, setErrorMsg] = useState(null); // New Error State
+    const [errorMsg, setErrorMsg] = useState(null);
 
     // Profile & History State
     const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -224,11 +225,9 @@ const Dashboard = () => {
         const formData = new FormData();
         let fileName = 'recording.webm'; 
         
-        // --- SMART EXTENSION FIX ---
         if (fileBlob.name) {
-            fileName = fileBlob.name; // File upload
+            fileName = fileBlob.name;
         } else {
-             // Mic Recording: Check MIME type carefully
              let ext = 'webm';
              if (fileBlob.type.includes('wav')) ext = 'wav';
              else if (fileBlob.type.includes('mp4')) ext = 'mp4';
@@ -245,9 +244,8 @@ const Dashboard = () => {
             
         const token = localStorage.getItem('musicTutorToken');
 
-        // Setup Timeout to prevent infinite "Processing"
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+        const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 mins
 
         try {
             const response = await fetch(endpoint, {
@@ -375,7 +373,6 @@ const Dashboard = () => {
             <div className="relative z-10 w-full max-w-xs space-y-4 text-center">
                 <h3 className="text-white font-serif text-2xl mb-2">{label}</h3>
                 
-                {/* STATUS & ERROR MESSAGES */}
                 {status === 'error' && (
                     <div className="bg-red-500/20 text-red-200 px-4 py-2 rounded-lg text-xs font-bold mb-4 flex items-center gap-2">
                         <AlertCircle className="w-4 h-4" /> {errorMsg || "An error occurred."}
@@ -442,13 +439,13 @@ const Dashboard = () => {
     const SmartLegend = (props) => {
         const { payload } = props;
         const handleLegendClick = (val) => {
-            const key = val.toLowerCase();
+            const key = val.toLowerCase() === 'reference score' ? 'teacher' : 'student';
             setFocusMode(focusMode === key ? 'all' : key);
         };
         return (
             <div className="flex items-center justify-center gap-6 mt-2 pt-2 border-t border-white/5">
                 {payload.map((entry, index) => {
-                    const key = entry.value.toLowerCase();
+                    const key = entry.value.toLowerCase() === 'reference score' ? 'teacher' : 'student';
                     const isFocused = focusMode === key;
                     const isDimmed = focusMode !== 'all' && !isFocused;
                     return (
@@ -475,21 +472,21 @@ const Dashboard = () => {
                         <h1 className="text-5xl font-serif font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60">Music Tutor</h1>
                         <div className="p-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md flex shadow-2xl">
                             <motion.div className={`absolute top-1 bottom-1 rounded-full shadow-lg ${mode === 'teacher' ? 'bg-neon-blue' : 'bg-neon-purple'}`} initial={false} animate={{ x: mode === 'teacher' ? 0 : '100%', width: '50%' }} />
-                            <button onClick={() => switchMode('teacher')} className={`relative z-10 px-8 py-2 rounded-full text-xs font-bold uppercase tracking-widest ${mode === 'teacher' ? 'text-white' : 'text-slate-400'}`}>Teacher</button>
-                            <button onClick={() => switchMode('student')} className={`relative z-10 px-8 py-2 rounded-full text-xs font-bold uppercase tracking-widest ${mode === 'student' ? 'text-white' : 'text-slate-400'}`}>Student</button>
+                            <button onClick={() => switchMode('teacher')} className={`relative z-10 px-8 py-2 rounded-full text-xs font-bold uppercase tracking-widest ${mode === 'teacher' ? 'text-white' : 'text-slate-400'}`}>Reference Score</button>
+                            <button onClick={() => switchMode('student')} className={`relative z-10 px-8 py-2 rounded-full text-xs font-bold uppercase tracking-widest ${mode === 'student' ? 'text-white' : 'text-slate-400'}`}>Input Performance</button>
                         </div>
                     </header>
                 )}
                 <main className="w-full">
                     {mode === 'teacher' && (
                         <div className="max-w-4xl mx-auto space-y-8">
-                            <div className="h-[350px]"><RecorderCard label="Record Reference Lesson" /></div>
+                            <div className="h-[350px]"><RecorderCard label="Record Reference Score" /></div>
                             <AnimatePresence>
                                 {teacherData && (
                                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                                         <GlassCard className="border-l-4 border-neon-blue relative">
                                             <div className="flex justify-between items-center mb-6">
-                                                <div><h3 className="text-neon-blue font-bold uppercase tracking-widest text-xs mb-1">Teacher's Reference</h3><h2 className="text-2xl font-serif text-white">Lesson Captured</h2></div>
+                                                <div><h3 className="text-neon-blue font-bold uppercase tracking-widest text-xs mb-1">Reference Score</h3><h2 className="text-2xl font-serif text-white">Lesson Captured</h2></div>
                                                 <div className="flex items-center gap-6">
                                                     <div className="text-right"><span className="block text-[10px] text-slate-400 uppercase tracking-widest font-bold">Notes</span><span className="text-xl font-bold text-white">{teacherData.notes ? teacherData.notes.length : 0}</span></div>
                                                     {teacherAudioURL && <AudioPlayerButton ref={teacherAudioRef} audioUrl={teacherAudioURL} colorClass="text-neon-blue" />}
@@ -509,23 +506,23 @@ const Dashboard = () => {
                                     <div className="flex flex-col h-full">
                                         {teacherData ? (
                                             <GlassCard className="flex-1 flex flex-col border-t-4 border-neon-blue bg-white/5">
-                                                <div className="flex justify-between items-center mb-6"><h3 className="text-neon-blue font-bold uppercase tracking-widest text-xs">Target Lesson</h3>{teacherAudioURL && <AudioPlayerButton ref={teacherAudioRef} audioUrl={teacherAudioURL} label="Listen" colorClass="text-neon-blue" />}</div>
+                                                <div className="flex justify-between items-center mb-6"><h3 className="text-neon-blue font-bold uppercase tracking-widest text-xs">Reference Score</h3>{teacherAudioURL && <AudioPlayerButton ref={teacherAudioRef} audioUrl={teacherAudioURL} label="Listen" colorClass="text-neon-blue" />}</div>
                                                 <div className="flex-1 bg-white rounded-xl p-4 flex items-center justify-center shadow-inner overflow-hidden"><div className="scale-90 origin-top w-full"><SheetMusic xmlData={teacherData.musicxml} /></div></div>
                                             </GlassCard>
-                                        ) : <GlassCard className="flex-1 flex flex-col items-center justify-center border-dashed border-2 border-white/10 bg-transparent opacity-50"><School className="w-12 h-12 text-slate-600 mb-4" /><p className="text-slate-500 text-sm">No Teacher Lesson Found</p></GlassCard>}
+                                        ) : <GlassCard className="flex-1 flex flex-col items-center justify-center border-dashed border-2 border-white/10 bg-transparent opacity-50"><School className="w-12 h-12 text-slate-600 mb-4" /><p className="text-slate-500 text-sm">No Reference Score Found</p></GlassCard>}
                                     </div>
-                                    <div className="flex flex-col h-full"><RecorderCard label="Record Your Attempt" /></div>
+                                    <div className="flex flex-col h-full"><RecorderCard label="Record Input Performance" /></div>
                                 </div>
                             ) : (
                                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
                                     <AnalysisTopBar />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <GlassCard className="border-t-4 border-neon-blue">
-                                            <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-neon-blue flex items-center gap-2 text-xs uppercase tracking-wider"><School className="w-4 h-4" /> Reference</h3>{teacherAudioURL && <AudioPlayerButton ref={teacherAudioRef} audioUrl={teacherAudioURL} colorClass="text-neon-blue" />}</div>
+                                            <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-neon-blue flex items-center gap-2 text-xs uppercase tracking-wider"><School className="w-4 h-4" /> Reference Score</h3>{teacherAudioURL && <AudioPlayerButton ref={teacherAudioRef} audioUrl={teacherAudioURL} colorClass="text-neon-blue" />}</div>
                                             <div className="bg-white rounded-xl overflow-hidden p-2 min-h-[180px] flex items-center justify-center shadow-inner">{teacherData ? <SheetMusic xmlData={teacherData.musicxml} /> : <span className="text-black/30 text-sm">No data</span>}</div>
                                         </GlassCard>
                                         <GlassCard className="border-t-4 border-neon-pink">
-                                            <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-neon-pink flex items-center gap-2 text-xs uppercase tracking-wider"><GraduationCap className="w-4 h-4" /> Your Transcription</h3><div className="flex items-baseline gap-1"><span className={`text-4xl font-serif font-bold ${getScoreColor(studentData.feedback.score)}`}>{studentData.feedback.score}</span><span className="text-sm text-slate-500 font-serif">%</span></div></div>
+                                            <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-neon-pink flex items-center gap-2 text-xs uppercase tracking-wider"><GraduationCap className="w-4 h-4" /> Input Performance</h3><div className="flex items-baseline gap-1"><span className={`text-4xl font-serif font-bold ${getScoreColor(studentData.feedback.score)}`}>{studentData.feedback.score}</span><span className="text-sm text-slate-500 font-serif">%</span></div></div>
                                             <div className="bg-white rounded-xl overflow-hidden p-2 min-h-[180px] flex items-center justify-center shadow-inner"><SheetMusic xmlData={studentData.musicxml} /></div>
                                         </GlassCard>
                                     </div>
@@ -563,8 +560,8 @@ const Dashboard = () => {
                                                         <YAxis label={{ value: 'Pitch (Hz)', angle: -90, position: 'insideLeft', fontSize: 10 }} fontSize={10} tick={{ fill: '#666' }} />
                                                         <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                                                         <Legend content={SmartLegend} />
-                                                        <Line type="monotone" dataKey="teacher" stroke="#2f5aff" strokeWidth={3} dot={false} name="Teacher" strokeOpacity={focusMode === 'all' || focusMode === 'teacher' ? 1 : 0.1} />
-                                                        <Line type="monotone" dataKey="student" stroke="#ff0055" strokeWidth={3} dot={false} name="Student" strokeOpacity={focusMode === 'all' || focusMode === 'student' ? 1 : 0.1} />
+                                                        <Line type="monotone" dataKey="teacher" stroke="#2f5aff" strokeWidth={3} dot={false} name="Reference Score" strokeOpacity={focusMode === 'all' || focusMode === 'teacher' ? 1 : 0.1} />
+                                                        <Line type="monotone" dataKey="student" stroke="#ff0055" strokeWidth={3} dot={false} name="Input Performance" strokeOpacity={focusMode === 'all' || focusMode === 'student' ? 1 : 0.1} />
                                                     </LineChart>
                                                 </ResponsiveContainer>
                                             </div>
@@ -577,9 +574,9 @@ const Dashboard = () => {
                                                         <YAxis label={{ value: 'Amplitude', angle: -90, position: 'insideLeft', fontSize: 10 }} fontSize={10} tick={{ fill: '#666' }} />
                                                         <Tooltip contentStyle={{ borderRadius: '8px' }} />
                                                         <Legend content={SmartLegend} />
-                                                        <Area type="monotone" dataKey="teacher_top" stackId="1" stroke="#2f5aff" fill="#2f5aff" name="Teacher" strokeOpacity={focusMode === 'all' || focusMode === 'teacher' ? 1 : 0.1} fillOpacity={focusMode === 'all' || focusMode === 'teacher' ? 0.4 : 0.05} />
+                                                        <Area type="monotone" dataKey="teacher_top" stackId="1" stroke="#2f5aff" fill="#2f5aff" name="Reference Score" strokeOpacity={focusMode === 'all' || focusMode === 'teacher' ? 1 : 0.1} fillOpacity={focusMode === 'all' || focusMode === 'teacher' ? 0.4 : 0.05} />
                                                         <Area type="monotone" dataKey="teacher_bottom" stackId="1" stroke="#2f5aff" fill="#2f5aff" showTooltip={false} strokeOpacity={focusMode === 'all' || focusMode === 'teacher' ? 1 : 0.1} fillOpacity={focusMode === 'all' || focusMode === 'teacher' ? 0.4 : 0.05} />
-                                                        <Area type="monotone" dataKey="student_top" stackId="2" stroke="#ff0055" fill="#ff0055" name="Student" strokeOpacity={focusMode === 'all' || focusMode === 'student' ? 1 : 0.1} fillOpacity={focusMode === 'all' || focusMode === 'student' ? 0.4 : 0.05} />
+                                                        <Area type="monotone" dataKey="student_top" stackId="2" stroke="#ff0055" fill="#ff0055" name="Input Performance" strokeOpacity={focusMode === 'all' || focusMode === 'student' ? 1 : 0.1} fillOpacity={focusMode === 'all' || focusMode === 'student' ? 0.4 : 0.05} />
                                                         <Area type="monotone" dataKey="student_bottom" stackId="2" stroke="#ff0055" fill="#ff0055" showTooltip={false} strokeOpacity={focusMode === 'all' || focusMode === 'student' ? 1 : 0.1} fillOpacity={focusMode === 'all' || focusMode === 'student' ? 0.4 : 0.05} />
                                                     </AreaChart>
                                                 </ResponsiveContainer>
