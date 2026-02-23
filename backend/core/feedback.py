@@ -224,10 +224,35 @@ def calculate_feedback(student_notes, student_audio_path):
 
     teacher_seq = np.array([n['pitch'] for n in teacher_notes]).reshape(-1, 1)
     student_seq = np.array([n['pitch'] for n in student_notes]).reshape(-1, 1)
+    
+    # Dynamic Time Warping finds the best alignment between the two sequences
     distance, path = fastdtw(teacher_seq, student_seq, dist=euclidean)
     
     max_len = max(len(teacher_seq), len(student_seq))
-    final_score = max(0, min(100, int(100 - ((distance / max_len) * 5.0))))
+    avg_distance = distance / max_len
+
+    # --- NEW STRICTER SCORING ALGORITHM ---
+    
+    # 1. Pitch Penalty: 1 average semitone off = 20% drop (instead of 5%)
+    pitch_penalty = avg_distance * 20.0
+
+    # 2. Length/Rhythm Penalty: Penalize if student sang way more/less notes than teacher
+    len_diff = abs(len(teacher_seq) - len(student_seq))
+    length_penalty = (len_diff / max(len(teacher_seq), 1)) * 25.0 
+
+    # Calculate final score
+    raw_score = 100.0 - pitch_penalty - length_penalty
+    final_score = max(0, min(100, int(raw_score)))
+
+    # --- DYNAMIC COMMENTS BASED ON NEW STRICTER SCORE ---
+    if final_score >= 90:
+        comments = ["Excellent! Pitch and rhythm are incredibly accurate."]
+    elif final_score >= 70:
+        comments = ["Good effort! Watch your tuning on a few stray notes."]
+    elif final_score >= 40:
+        comments = ["Keep practicing. You are hitting some right notes, but the overall pitch or rhythm is off."]
+    else:
+        comments = ["The performance didn't match the reference. Listen closely to the target score and try again."]
 
     detailed_breakdown = []
     seen_teacher = set()
@@ -241,7 +266,7 @@ def calculate_feedback(student_notes, student_audio_path):
         s_note_name = librosa.midi_to_note(int(round(s_val)), unicode=False)
         
         diff = s_val - t_val
-        status = "match" if abs(diff) < 0.5 else "error"
+        status = "match" if abs(diff) <= 1.0 else "error" # Allows for slight vocal wavering
         
         if status == "match":
             msg = f"Note {t_idx+1} ({t_note_name}): Perfect match!"
@@ -256,7 +281,7 @@ def calculate_feedback(student_notes, student_audio_path):
     
     return {
         "score": final_score,
-        "comments": ["Great job!"] if final_score > 80 else ["Keep practicing."],
+        "comments": comments,
         "detailed_breakdown": detailed_breakdown,
         "graph_data": graph_data
     }
