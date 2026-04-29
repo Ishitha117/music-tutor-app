@@ -4,6 +4,7 @@ import GlassCard from '../components/ui/GlassCard';
 import { User, Lock, ArrowRight } from 'lucide-react';
 // Import the helper function
 import { getApiUrl } from '../api'; 
+const [success, setSuccess] = useState("");
 
 const Login = () => {
     const [isLogin, setIsLogin] = useState(true);
@@ -63,9 +64,18 @@ const Login = () => {
                 navigate("/dashboard", { replace: true });
             } else {
                 console.log("STEP 8: Register Success");
+
+   
+                setSuccess("Account created successfully!");
+                setUsername("");
+                setPassword("");  
                 setIsLogin(true);
-                setError("Registered! Please log in.");
-            }
+                setError("");
+    
+                setTimeout(() => {
+                    setSuccess("");
+                    }, 3000);
+                }
         } catch (err) {
             console.error("CRITICAL ERROR IN HANDLESUBMIT:", err);
             setError(err.message);
@@ -80,6 +90,12 @@ const Login = () => {
                 </h2>
                 {error && <div className="bg-red-500/20 text-red-200 p-3 rounded-lg mb-4 text-sm text-center">{error}</div>}
                 
+                {success && (
+  <div className="fixed top-5 right-5 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg animate-fade-in">
+    {success}
+  </div>
+)}
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Username</label>
@@ -117,7 +133,13 @@ const Login = () => {
 
                 <div className="mt-6 text-center">
                     <button 
-                        onClick={() => setIsLogin(!isLogin)}
+                       onClick={() => {
+    setIsLogin(!isLogin);
+    setUsername("");
+    setPassword("");
+    setError("");
+    setSuccess("");
+}}
                         className="text-sm text-slate-400 hover:text-white underline decoration-dotted underline-offset-4"
                     >
                         {isLogin ? "Need an account? Sign Up" : "Have an account? Log In"}
