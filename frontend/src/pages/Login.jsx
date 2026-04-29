@@ -4,13 +4,13 @@ import GlassCard from '../components/ui/GlassCard';
 import { User, Lock, ArrowRight } from 'lucide-react';
 // Import the helper function
 import { getApiUrl } from '../api'; 
-const [success, setSuccess] = useState("");
 
 const Login = () => {
     const [isLogin, setIsLogin] = useState(true);
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
     const navigate = useNavigate();
 
     // Check for existing session on mount
